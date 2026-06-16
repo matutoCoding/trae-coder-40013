@@ -1,12 +1,11 @@
 import React, { useState, useMemo } from 'react';
 import { View, Text, Input, ScrollView } from '@tarojs/components';
-import Taro from '@tarojs/taro';
+import Taro, { useDidShow } from '@tarojs/taro';
 import styles from './index.module.scss';
 import classnames from 'classnames';
 import RecordItem from '@/components/RecordItem';
-import { recordList } from '@/data/records';
-import { processList } from '@/data/processes';
-import { ProcessKey, ProcessStatus } from '@/types';
+import { useRecords } from '@/hooks/useSpringStore';
+import { ProcessKey } from '@/types';
 
 type ProcessFilter = 'all' | ProcessKey;
 
@@ -24,9 +23,15 @@ const statusFilters: Array<{ key: ProcessFilter; label: string }> = [
 const RecordsPage: React.FC = () => {
   const [searchText, setSearchText] = useState('');
   const [activeFilter, setActiveFilter] = useState<ProcessFilter>('all');
+  const { records, refresh } = useRecords();
+
+  useDidShow(() => {
+    console.log('[RecordsPage] 页面显示，刷新数据');
+    refresh();
+  });
 
   const filteredRecords = useMemo(() => {
-    let list = [...recordList];
+    let list = [...records];
 
     if (activeFilter !== 'all') {
       list = list.filter(r => r.processKey === activeFilter);
@@ -36,31 +41,35 @@ const RecordsPage: React.FC = () => {
       const keyword = searchText.trim().toLowerCase();
       list = list.filter(
         r =>
-          r.batchNo.toLowerCase().includes(keyword) ||
-          r.springModel.toLowerCase().includes(keyword) ||
-          r.operator.toLowerCase().includes(keyword)
+          (r.batchNo || '').toLowerCase().includes(keyword) ||
+          (r.springModel || '').toLowerCase().includes(keyword) ||
+          (r.operator || '').toLowerCase().includes(keyword)
       );
     }
 
+    console.log('[RecordsPage] 筛选后记录数:', list.length, '筛选条件:', activeFilter, '关键词:', searchText);
     return list;
-  }, [searchText, activeFilter]);
+  }, [searchText, activeFilter, records]);
 
   const stats = useMemo(() => {
-    const total = recordList.length;
-    const done = recordList.filter(r => r.status === 'done').length;
-    const totalQty = recordList.reduce((sum, r) => sum + r.quantity, 0);
+    const total = records.length;
+    const done = records.filter(r => r.status === 'done').length;
+    const totalQty = records.reduce((sum, r) => sum + (r.quantity || 0), 0);
     return { total, done, totalQty };
-  }, []);
+  }, [records]);
+
+  const handleRefresh = () => {
+    refresh();
+    Taro.showToast({ title: '刷新成功', icon: 'success' });
+    Taro.stopPullDownRefresh();
+  };
 
   return (
     <ScrollView
       className={styles.page}
       scrollY
       refresherEnabled
-      onRefresh={() => {
-        Taro.showToast({ title: '刷新成功', icon: 'success' });
-        Taro.stopPullDownRefresh();
-      }}
+      onRefresh={handleRefresh}
     >
       <View className={styles.container}>
         <View className={styles.searchBar}>
@@ -119,6 +128,9 @@ const RecordsPage: React.FC = () => {
           <View className={styles.emptyState}>
             <Text className={styles.emptyIcon}>📝</Text>
             <Text className={styles.emptyText}>暂无匹配记录</Text>
+            <Text style={{ fontSize: '24rpx', color: '#CBD5E1', marginTop: '8rpx', display: 'block' }}>
+              试试调整搜索条件或筛选范围
+            </Text>
           </View>
         )}
       </View>

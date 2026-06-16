@@ -1,10 +1,10 @@
 import React, { useState, useMemo } from 'react';
 import { View, Text, ScrollView } from '@tarojs/components';
-import Taro from '@tarojs/taro';
+import Taro, { useDidShow } from '@tarojs/taro';
 import styles from './index.module.scss';
 import classnames from 'classnames';
 import ProcessCard from '@/components/ProcessCard';
-import { processList } from '@/data/processes';
+import { useProcesses } from '@/hooks/useSpringStore';
 import { ProcessStatus } from '@/types';
 
 type FilterType = 'all' | ProcessStatus;
@@ -18,28 +18,37 @@ const filters: Array<{ key: FilterType; label: string }> = [
 
 const ProcessPage: React.FC = () => {
   const [activeFilter, setActiveFilter] = useState<FilterType>('all');
+  const { processes, refresh } = useProcesses();
+
+  useDidShow(() => {
+    console.log('[ProcessPage] 页面显示，刷新数据');
+    refresh();
+  });
 
   const filteredProcesses = useMemo(() => {
-    if (activeFilter === 'all') return processList;
-    return processList.filter(p => p.status === activeFilter);
-  }, [activeFilter]);
+    if (activeFilter === 'all') return processes;
+    return processes.filter(p => p.status === activeFilter);
+  }, [activeFilter, processes]);
 
   const summary = useMemo(() => ({
-    total: processList.length,
-    done: processList.filter(p => p.status === 'done').length,
-    active: processList.filter(p => p.status === 'active').length,
-    pending: processList.filter(p => p.status === 'pending').length
-  }), []);
+    total: processes.length,
+    done: processes.filter(p => p.status === 'done').length,
+    active: processes.filter(p => p.status === 'active').length,
+    pending: processes.filter(p => p.status === 'pending').length
+  }), [processes]);
+
+  const handleRefresh = () => {
+    refresh();
+    Taro.showToast({ title: '刷新成功', icon: 'success' });
+    Taro.stopPullDownRefresh();
+  };
 
   return (
     <ScrollView
       className={styles.page}
       scrollY
       refresherEnabled
-      onRefresh={() => {
-        Taro.showToast({ title: '刷新成功', icon: 'success' });
-        Taro.stopPullDownRefresh();
-      }}
+      onRefresh={handleRefresh}
     >
       <View className={styles.container}>
         <View className={styles.filterTabs}>
@@ -47,8 +56,7 @@ const ProcessPage: React.FC = () => {
             <View
               key={f.key}
               className={classnames(
-                styles.filterTab,
-                activeFilter === f.key && styles.filterTabActive
+                styles.filterTab, activeFilter === f.key && styles.filterTabActive
               )}
               onClick={() => setActiveFilter(f.key)}
             >
@@ -92,6 +100,9 @@ const ProcessPage: React.FC = () => {
           <View className={styles.emptyState}>
             <Text className={styles.emptyIcon}>📋</Text>
             <Text className={styles.emptyText}>暂无工序数据</Text>
+            <Text style={{ fontSize: '24rpx', color: '#CBD5E1', marginTop: '8rpx', display: 'block' }}>
+              切换其他筛选条件看看
+            </Text>
           </View>
         )}
       </View>

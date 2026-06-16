@@ -1,13 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { View, Text, ScrollView } from '@tarojs/components';
-import Taro from '@tarojs/taro';
+import Taro, { useDidShow } from '@tarojs/taro';
 import styles from './index.module.scss';
 import StatCard from '@/components/StatCard';
 import SectionHeader from '@/components/SectionHeader';
 import ProcessCard from '@/components/ProcessCard';
 import RecordItem from '@/components/RecordItem';
-import { processList } from '@/data/processes';
-import { recordList } from '@/data/records';
+import { useRecords, useProcesses } from '@/hooks/useSpringStore';
 import { ProcessKey } from '@/types';
 
 const quickActions: Array<{ key: ProcessKey | 'all'; label: string; icon: string; color: string }> = [
@@ -23,6 +22,21 @@ const quickActions: Array<{ key: ProcessKey | 'all'; label: string; icon: string
 
 const IndexPage: React.FC = () => {
   const [today] = useState(new Date().toLocaleDateString('zh-CN'));
+  const { records, refresh: refreshRecords } = useRecords();
+  const { processes, refresh: refreshProcesses } = useProcesses();
+
+  useDidShow(() => {
+    console.log('[IndexPage] 页面显示，刷新数据');
+    refreshRecords();
+    refreshProcesses();
+  });
+
+  const handleRefresh = () => {
+    refreshRecords();
+    refreshProcesses();
+    Taro.showToast({ title: '刷新成功', icon: 'success' });
+    Taro.stopPullDownRefresh();
+  };
 
   const handleQuickAction = (key: ProcessKey | 'all') => {
     if (key === 'all') {
@@ -32,26 +46,40 @@ const IndexPage: React.FC = () => {
     }
   };
 
-  const activeProcesses = processList.filter(p => p.status === 'active');
-  const recentRecords = recordList.slice(0, 3);
-  const doneCount = processList.filter(p => p.status === 'done').length;
-  const todayTotal = processList.reduce((sum, p) => sum + p.todayCount, 0);
-  const totalPassRate = '98.2%';
+  const activeProcesses = useMemo(
+    () => processes.filter(p => p.status === 'active'),
+    [processes]
+  );
+  const recentRecords = useMemo(() => records.slice(0, 3), [records]);
+  const doneCount = useMemo(
+    () => processes.filter(p => p.status === 'done').length,
+    [processes]
+  );
+  const todayTotal = useMemo(
+    () => processes.reduce((sum, p) => sum + (p.todayCount || 0), 0),
+    [processes]
+  );
 
-  const steps = processList.map(p => ({
-    label: p.shortName,
-    status: p.status
-  }));
+  const totalPassRate = useMemo(() => {
+    const doneRecords = records.filter(r => r.status === 'done' && r.quantity > 0);
+    if (doneRecords.length === 0) return '98.2%';
+    const totalQty = doneRecords.reduce((s, r) => s + r.quantity, 0);
+    const totalPass = doneRecords.reduce((s, r) => s + (r.passed || 0), 0);
+    if (totalQty === 0) return '0%';
+    return `${((totalPass / totalQty) * 100).toFixed(1)}%`;
+  }, [records]);
+
+  const steps = useMemo(
+    () => processes.map(p => ({ label: p.shortName, status: p.status })),
+    [processes]
+  );
 
   return (
     <ScrollView
       className={styles.page}
       scrollY
       refresherEnabled
-      onRefresh={() => {
-        Taro.showToast({ title: '刷新成功', icon: 'success' });
-        Taro.stopPullDownRefresh();
-      }}
+      onRefresh={handleRefresh}
     >
       <View className={styles.container}>
         <View className={styles.heroSection}>
@@ -65,14 +93,12 @@ const IndexPage: React.FC = () => {
             label="今日产量"
             value={todayTotal}
             unit="件"
-            trend="up"
-            trendValue="12%"
             color="#2563EB"
             icon="◉"
           />
           <StatCard
             label="完成工序"
-            value={`${doneCount}/${processList.length}`}
+            value={`${doneCount}/${processes.length}`}
             color="#059669"
             icon="✓"
           />
@@ -86,8 +112,6 @@ const IndexPage: React.FC = () => {
           <StatCard
             label="合格率"
             value={totalPassRate}
-            trend="up"
-            trendValue="0.3%"
             color="#0891B2"
             icon="★"
           />
@@ -138,18 +162,32 @@ const IndexPage: React.FC = () => {
           actionText="查看全部"
           onAction={() => Taro.switchTab({ url: '/pages/process/index' })}
         />
-        {activeProcesses.map(p => (
-          <ProcessCard key={p.key} process={p} />
-        ))}
+        {activeProcesses.length > 0 ? (
+          activeProcesses.map(p => (
+            <ProcessCard key={p.key} process={p} />
+          ))
+        ) : (
+          <View style={{ padding: '48rpx', textAlign: 'center', background: '#fff', borderRadius: '16rpx' }}>
+            <Text style={{ fontSize: '60rpx', color: '#CBD5E1', display: 'block', marginBottom: '16rpx' }}>📋</Text>
+            <Text style={{ fontSize: '28rpx', color: '#94A3B8' }}>暂无进行中的工序</Text>
+          </View>
+        )}
 
         <SectionHeader
           title="最近记录"
           actionText="更多"
           onAction={() => Taro.switchTab({ url: '/pages/records/index' })}
         />
-        {recentRecords.map(r => (
-          <RecordItem key={r.id} record={r} />
-        ))}
+        {recentRecords.length > 0 ? (
+          recentRecords.map(r => (
+            <RecordItem key={r.id} record={r} />
+          ))
+        ) : (
+          <View style={{ padding: '48rpx', textAlign: 'center', background: '#fff', borderRadius: '16rpx' }}>
+            <Text style={{ fontSize: '60rpx', color: '#CBD5E1', display: 'block', marginBottom: '16rpx' }}>📝</Text>
+            <Text style={{ fontSize: '28rpx', color: '#94A3B8' }}>暂无生产记录</Text>
+          </View>
+        )}
       </View>
     </ScrollView>
   );
