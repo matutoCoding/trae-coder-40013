@@ -1,5 +1,5 @@
 import Taro from '@tarojs/taro';
-import { ProductionRecord, ProcessModule } from '@/types';
+import { ProductionRecord, ProcessModule, ProcessKey } from '@/types';
 import { processList as mockProcesses } from '@/data/processes';
 import { recordList as mockRecordData } from '@/data/records';
 
@@ -27,9 +27,7 @@ export const getRecords = (): ProductionRecord[] => {
   try {
     const data = Taro.getStorageSync(STORAGE_KEY_RECORDS);
     if (data) {
-      const parsed = typeof data === 'string' ? JSON.parse(data) : data;
-      console.log('[Store] 获取记录成功，共', parsed.length, '条');
-      return parsed;
+      return typeof data === 'string' ? JSON.parse(data) : data;
     }
   } catch (e) {
     console.error('[Store] 获取记录失败:', e);
@@ -40,6 +38,19 @@ export const getRecords = (): ProductionRecord[] => {
 export const getRecordById = (id: string): ProductionRecord | undefined => {
   const records = getRecords();
   return records.find(r => r.id === id);
+};
+
+export const getRecordsByBatchNo = (batchNo: string): ProductionRecord[] => {
+  const records = getRecords();
+  return records
+    .filter(r => r.batchNo === batchNo)
+    .sort((a, b) => {
+      const processOrder: Record<string, number> = {
+        wire_incoming: 1, coiling: 2, stress_relief: 3,
+        end_grinding: 4, setting: 5, load_test: 6, surface_treatment: 7
+      };
+      return (processOrder[a.processKey] || 99) - (processOrder[b.processKey] || 99);
+    });
 };
 
 export const addRecord = (record: ProductionRecord): ProductionRecord[] => {
@@ -62,7 +73,6 @@ export const updateRecord = (id: string, updates: Partial<ProductionRecord>): Pr
     if (idx >= 0) {
       records[idx] = { ...records[idx], ...updates };
       Taro.setStorageSync(STORAGE_KEY_RECORDS, JSON.stringify(records));
-      console.log('[Store] 更新记录成功:', id);
     }
     return records;
   } catch (e) {
@@ -112,6 +122,92 @@ export const updateProcessStats = (
     console.error('[Store] 更新工序统计失败:', e);
     return getProcesses();
   }
+};
+
+export const recalcAllProcessStats = (): ProcessModule[] => {
+  try {
+    const records = getRecords();
+    const processes = getProcesses();
+    const today = new Date();
+    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+
+    const processOrder: Record<string, number> = {
+      wire_incoming: 1, coiling: 2, stress_relief: 3,
+      end_grinding: 4, setting: 5, load_test: 6, surface_treatment: 7
+    };
+
+    const updated = processes.map(p => {
+      const pRecords = records.filter(r => r.processKey === p.key);
+      const todayRecords = pRecords.filter(r => (r.startTime || '').startsWith(todayStr));
+      const todayCount = todayRecords.reduce((s, r) => s + (r.quantity || 0), 0);
+      const totalCount = pRecords.reduce((s, r) => s + (r.quantity || 0), 0);
+
+      const allKeys = Object.keys(processOrder) as ProcessKey[];
+      const myOrder = processOrder[p.key] || 99;
+      const prevKeys = allKeys.filter(k => (processOrder[k] || 99) < myOrder);
+      const prevDone = prevKeys.every(k => {
+        const prevRecords = records.filter(r => r.processKey === k && r.status === 'done');
+        return prevRecords.length > 0;
+      });
+      const hasAny = pRecords.length > 0;
+      const allDone = pRecords.length > 0 && pRecords.every(r => r.status === 'done');
+
+      let status = p.status;
+      if (allDone) status = 'done';
+      else if (hasAny) status = 'active';
+      else if (prevDone) status = 'active';
+      else status = 'pending';
+
+      const progress = totalCount > 0
+        ? Math.min(100, Math.round((pRecords.filter(r => r.status === 'done').length / Math.max(1, pRecords.length)) * 100))
+        : (prevDone ? 0 : 0);
+
+      return { ...p, todayCount, totalCount, progress, status };
+    });
+
+    Taro.setStorageSync(STORAGE_KEY_PROCESSES, JSON.stringify(updated));
+    console.log('[Store] 重算所有工序统计完成');
+    return updated;
+  } catch (e) {
+    console.error('[Store] 重算工序统计失败:', e);
+    return getProcesses();
+  }
+};
+
+export const getTodayStatsByProcess = (): Record<string, { count: number; qty: number; failed: number }> => {
+  const records = getRecords();
+  const today = new Date();
+  const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+  const todayRecords = records.filter(r => (r.startTime || '').startsWith(todayStr));
+
+  const result: Record<string, { count: number; qty: number; failed: number }> = {};
+  todayRecords.forEach(r => {
+    if (!result[r.processKey]) {
+      result[r.processKey] = { count: 0, qty: 0, failed: 0 };
+    }
+    result[r.processKey].count += 1;
+    result[r.processKey].qty += r.quantity || 0;
+    result[r.processKey].failed += r.failed || 0;
+  });
+  return result;
+};
+
+export const getWeeklyTrend = (): Array<{ date: string; qty: number }> => {
+  const records = getRecords();
+  const result: Array<{ date: string; qty: number }> = [];
+  const today = new Date();
+
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(today);
+    d.setDate(d.getDate() - i);
+    const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    const dayLabel = `${d.getMonth() + 1}/${d.getDate()}`;
+    const dayQty = records
+      .filter(r => (r.startTime || '').startsWith(dateStr))
+      .reduce((s, r) => s + (r.quantity || 0), 0);
+    result.push({ date: dayLabel, qty: dayQty });
+  }
+  return result;
 };
 
 export const clearAllData = () => {

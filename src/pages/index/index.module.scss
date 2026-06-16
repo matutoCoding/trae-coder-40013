@@ -85,6 +85,149 @@
   text-align: center;
 }
 
+.processTodayGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: $spacing-md;
+  margin-bottom: $spacing-md;
+}
+
+.processTodayCard {
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-md;
+  box-shadow: $shadow-card;
+}
+
+.ptcHeader {
+  display: flex;
+  align-items: center;
+  margin-bottom: $spacing-sm;
+}
+
+.ptcIcon {
+  width: 56rpx;
+  height: 56rpx;
+  border-radius: $radius-md;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: $spacing-sm;
+  font-size: $font-size-md;
+  font-weight: $font-weight-bold;
+}
+
+.ptcName {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+}
+
+.ptcMetrics {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: $spacing-xs;
+}
+
+.ptcMetric {
+  display: flex;
+  align-items: baseline;
+}
+
+.ptcValue {
+  font-size: $font-size-xxl;
+  font-weight: $font-weight-bold;
+  color: $color-text-primary;
+}
+
+.ptcUnit {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+  margin-left: $spacing-xs;
+}
+
+.ptcFailed {
+  flex-shrink: 0;
+}
+
+.ptcFailedText {
+  font-size: $font-size-xs;
+  color: $color-error;
+  background: #FEF2F2;
+  padding: 2rpx $spacing-sm;
+  border-radius: $radius-xs;
+  font-weight: $font-weight-medium;
+}
+
+.ptcOkText {
+  font-size: $font-size-xs;
+  color: $color-success;
+  background: #ECFDF5;
+  padding: 2rpx $spacing-sm;
+  border-radius: $radius-xs;
+}
+
+.ptcCount {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+}
+
+.trendSection {
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  box-shadow: $shadow-card;
+  margin-bottom: $spacing-md;
+}
+
+.trendChart {
+  display: flex;
+  align-items: flex-end;
+  height: 300rpx;
+  padding-top: $spacing-lg;
+}
+
+.trendBarWrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100%;
+}
+
+.trendValue {
+  font-size: $font-size-xs;
+  color: $color-text-secondary;
+  font-weight: $font-weight-medium;
+  margin-bottom: $spacing-xs;
+  height: 32rpx;
+  display: flex;
+  align-items: flex-end;
+}
+
+.trendBarBg {
+  flex: 1;
+  width: 48rpx;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.trendBar {
+  width: 100%;
+  border-radius: $radius-sm $radius-sm 0 0;
+  min-height: 4rpx;
+  transition: height $transition-base;
+}
+
+.trendLabel {
+  font-size: 20rpx;
+  color: $color-text-tertiary;
+  margin-top: $spacing-xs;
+  text-align: center;
+}
+
 .processTimeline {
   background: $color-bg-card;
   border-radius: $radius-lg;

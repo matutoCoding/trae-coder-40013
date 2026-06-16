@@ -5,31 +5,32 @@ import styles from './index.module.scss';
 import classnames from 'classnames';
 import * as store from '@/store';
 import { getProcessByKey as getProcessByKeyStatic } from '@/data/processes';
-import { getStatusText, calculatePassRate } from '@/utils';
+import { getStatusText, getStatusColor, calculatePassRate } from '@/utils';
+import { ProductionRecord } from '@/types';
+
+const processOrderMap: Record<string, number> = {
+  wire_incoming: 1, coiling: 2, stress_relief: 3,
+  end_grinding: 4, setting: 5, load_test: 6, surface_treatment: 7
+};
 
 const RecordDetailPage: React.FC = () => {
   const router = useRouter();
   const recordId = router.params.id;
-  const [record, setRecord] = useState<any>(null);
+  const [record, setRecord] = useState<ProductionRecord | null>(null);
+  const [batchRecords, setBatchRecords] = useState<ProductionRecord[]>([]);
 
   const loadRecord = () => {
-    console.log('[RecordDetail] 加载记录:', recordId);
-    if (!recordId) {
-      console.warn('[RecordDetail] 缺少记录ID');
-      return;
-    }
+    if (!recordId) return;
     const r = store.getRecordById(recordId);
-    console.log('[RecordDetail] 查询结果:', r);
     setRecord(r || null);
+    if (r) {
+      const batchList = store.getRecordsByBatchNo(r.batchNo);
+      setBatchRecords(batchList);
+    }
   };
 
-  useEffect(() => {
-    loadRecord();
-  }, [recordId]);
-
-  useDidShow(() => {
-    loadRecord();
-  });
+  useEffect(() => { loadRecord(); }, [recordId]);
+  useDidShow(() => { loadRecord(); });
 
   const process = useMemo(() => {
     if (!record) return undefined;
@@ -44,12 +45,7 @@ const RecordDetailPage: React.FC = () => {
         <View className={styles.container}>
           <View style={{ padding: '128rpx 32rpx', textAlign: 'center' }}>
             <Text style={{ fontSize: '100rpx', color: '#CBD5E1', display: 'block', marginBottom: '24rpx' }}>📝</Text>
-            <Text style={{ fontSize: '32rpx', color: '#94A3B8', display: 'block', marginBottom: '8rpx' }}>
-              记录不存在
-            </Text>
-            <Text style={{ fontSize: '24rpx', color: '#CBD5E1' }}>
-              ID: {recordId || '未指定'}
-            </Text>
+            <Text style={{ fontSize: '32rpx', color: '#94A3B8' }}>记录不存在</Text>
           </View>
         </View>
       </View>
@@ -61,6 +57,12 @@ const RecordDetailPage: React.FC = () => {
     : '-';
   const fieldLabels = process?.fields || [];
   const recordDataEntries = Object.entries(record.data || {});
+
+  const allProcessKeys = ['wire_incoming', 'coiling', 'stress_relief', 'end_grinding', 'setting', 'load_test', 'surface_treatment'];
+  const batchProgress = allProcessKeys.map(key => {
+    const found = batchRecords.find(r => r.processKey === key);
+    return { key, record: found || null };
+  });
 
   return (
     <ScrollView className={styles.page} scrollY>
@@ -103,6 +105,80 @@ const RecordDetailPage: React.FC = () => {
               {passRate}
             </Text>
             <Text className={styles.metricLabel}>合格率</Text>
+          </View>
+        </View>
+
+        <View className={styles.section}>
+          <View className={styles.sectionTitle}>
+            <View className={styles.titleBar} />
+            <Text>批次流转追踪</Text>
+            <Text className={styles.batchCountTag}>
+              {batchRecords.length}/{allProcessKeys.length} 步
+            </Text>
+          </View>
+          <View className={styles.flowTrack}>
+            {batchProgress.map((item, idx) => {
+              const p = store.getProcessByKey(item.key) || getProcessByKeyStatic(item.key);
+              const isDone = item.record?.status === 'done';
+              const isActive = item.record?.status === 'active';
+              const isPending = !item.record;
+              const isCurrent = item.record?.id === record.id;
+
+              return (
+                <View key={item.key} className={styles.flowItem}>
+                  <View className={styles.flowLineWrap}>
+                    <View
+                      className={classnames(
+                        styles.flowDot,
+                        isDone && styles.flowDotDone,
+                        isActive && styles.flowDotActive,
+                        isPending && styles.flowDotPending
+                      )}
+                    >
+                      {isDone ? '✓' : (idx + 1)}
+                    </View>
+                    {idx < batchProgress.length - 1 && (
+                      <View className={classnames(
+                        styles.flowLine,
+                        isDone && styles.flowLineDone
+                      )} />
+                    )}
+                  </View>
+                  <View className={classnames(
+                    styles.flowContent,
+                    isCurrent && styles.flowContentCurrent
+                  )}>
+                    <View className={styles.flowHeader}>
+                      <Text className={classnames(
+                        styles.flowName,
+                        isDone && styles.flowNameDone,
+                        isActive && styles.flowNameActive,
+                        isPending && styles.flowNamePending
+                      )}>
+                        {p?.shortName || item.key}
+                      </Text>
+                      {isCurrent && <Text className={styles.currentTag}>当前</Text>}
+                    </View>
+                    {item.record ? (
+                      <View className={styles.flowDetail}>
+                        <Text className={styles.flowQty}>数量: {item.record.quantity}</Text>
+                        {isDone && (
+                          <Text className={classnames(
+                            styles.flowResult,
+                            item.record.failed > 0 ? styles.flowResultWarn : styles.flowResultOk
+                          )}>
+                            合格{item.record.passed}{item.record.failed > 0 ? ` / 不合格${item.record.failed}` : ''}
+                          </Text>
+                        )}
+                        {!isDone && <Text className={styles.flowResultActive}>进行中</Text>}
+                      </View>
+                    ) : (
+                      <Text className={styles.flowPending}>待处理</Text>
+                    )}
+                  </View>
+                </View>
+              );
+            })}
           </View>
         </View>
 

@@ -7,6 +7,7 @@ import SectionHeader from '@/components/SectionHeader';
 import ProcessCard from '@/components/ProcessCard';
 import RecordItem from '@/components/RecordItem';
 import { useRecords, useProcesses } from '@/hooks/useSpringStore';
+import * as store from '@/store';
 import { ProcessKey } from '@/types';
 
 const quickActions: Array<{ key: ProcessKey | 'all'; label: string; icon: string; color: string }> = [
@@ -20,13 +21,22 @@ const quickActions: Array<{ key: ProcessKey | 'all'; label: string; icon: string
   { key: 'all', label: '全部工序', icon: '▦', color: '#2563EB' }
 ];
 
+const processIconMap: Record<string, string> = {
+  wire_incoming: '⦿', coiling: '◎', stress_relief: '♨',
+  end_grinding: '◇', setting: '⬇', load_test: '⚖', surface_treatment: '✦'
+};
+
+const processColorMap: Record<string, string> = {
+  wire_incoming: '#2563EB', coiling: '#0891B2', stress_relief: '#D97706',
+  end_grinding: '#7C3AED', setting: '#059669', load_test: '#DC2626', surface_treatment: '#0891B2'
+};
+
 const IndexPage: React.FC = () => {
   const [today] = useState(new Date().toLocaleDateString('zh-CN'));
   const { records, refresh: refreshRecords } = useRecords();
   const { processes, refresh: refreshProcesses } = useProcesses();
 
   useDidShow(() => {
-    console.log('[IndexPage] 页面显示，刷新数据');
     refreshRecords();
     refreshProcesses();
   });
@@ -46,19 +56,10 @@ const IndexPage: React.FC = () => {
     }
   };
 
-  const activeProcesses = useMemo(
-    () => processes.filter(p => p.status === 'active'),
-    [processes]
-  );
+  const activeProcesses = useMemo(() => processes.filter(p => p.status === 'active'), [processes]);
   const recentRecords = useMemo(() => records.slice(0, 3), [records]);
-  const doneCount = useMemo(
-    () => processes.filter(p => p.status === 'done').length,
-    [processes]
-  );
-  const todayTotal = useMemo(
-    () => processes.reduce((sum, p) => sum + (p.todayCount || 0), 0),
-    [processes]
-  );
+  const doneCount = useMemo(() => processes.filter(p => p.status === 'done').length, [processes]);
+  const todayTotal = useMemo(() => processes.reduce((sum, p) => sum + (p.todayCount || 0), 0), [processes]);
 
   const totalPassRate = useMemo(() => {
     const doneRecords = records.filter(r => r.status === 'done' && r.quantity > 0);
@@ -69,18 +70,18 @@ const IndexPage: React.FC = () => {
     return `${((totalPass / totalQty) * 100).toFixed(1)}%`;
   }, [records]);
 
-  const steps = useMemo(
-    () => processes.map(p => ({ label: p.shortName, status: p.status })),
-    [processes]
-  );
+  const steps = useMemo(() => processes.map(p => ({ label: p.shortName, status: p.status })), [processes]);
+
+  const todayStats = useMemo(() => store.getTodayStatsByProcess(), [records]);
+  const totalAnomaly = useMemo(() => {
+    return Object.values(todayStats).reduce((s, v) => s + (v.failed || 0), 0);
+  }, [todayStats]);
+
+  const weeklyTrend = useMemo(() => store.getWeeklyTrend(), [records]);
+  const maxWeeklyQty = useMemo(() => Math.max(...weeklyTrend.map(d => d.qty), 1), [weeklyTrend]);
 
   return (
-    <ScrollView
-      className={styles.page}
-      scrollY
-      refresherEnabled
-      onRefresh={handleRefresh}
-    >
+    <ScrollView className={styles.page} scrollY refresherEnabled onRefresh={handleRefresh}>
       <View className={styles.container}>
         <View className={styles.heroSection}>
           <Text className={styles.greeting}>今天是 {today}</Text>
@@ -89,52 +90,88 @@ const IndexPage: React.FC = () => {
         </View>
 
         <View className={styles.statsGrid}>
+          <StatCard label="今日产量" value={todayTotal} unit="件" color="#2563EB" icon="◉" />
+          <StatCard label="完成工序" value={`${doneCount}/${processes.length}`} color="#059669" icon="✓" />
           <StatCard
-            label="今日产量"
-            value={todayTotal}
+            label="异常数量"
+            value={totalAnomaly}
             unit="件"
-            color="#2563EB"
-            icon="◉"
+            color={totalAnomaly > 0 ? '#DC2626' : '#059669'}
+            icon="⚠"
           />
-          <StatCard
-            label="完成工序"
-            value={`${doneCount}/${processes.length}`}
-            color="#059669"
-            icon="✓"
-          />
-          <StatCard
-            label="进行中"
-            value={activeProcesses.length}
-            unit="项"
-            color="#D97706"
-            icon="▶"
-          />
-          <StatCard
-            label="合格率"
-            value={totalPassRate}
-            color="#0891B2"
-            icon="★"
-          />
+          <StatCard label="合格率" value={totalPassRate} color="#0891B2" icon="★" />
         </View>
 
         <SectionHeader title="快捷入口" />
         <View className={styles.quickSection}>
           <View className={styles.quickGrid}>
             {quickActions.map(action => (
-              <View
-                key={action.key}
-                className={styles.quickItem}
-                onClick={() => handleQuickAction(action.key)}
-              >
-                <View
-                  className={styles.quickIcon}
-                  style={{ backgroundColor: `${action.color}15`, color: action.color }}
-                >
+              <View key={action.key} className={styles.quickItem} onClick={() => handleQuickAction(action.key)}>
+                <View className={styles.quickIcon} style={{ backgroundColor: `${action.color}15`, color: action.color }}>
                   {action.icon}
                 </View>
                 <Text className={styles.quickLabel}>{action.label}</Text>
               </View>
             ))}
+          </View>
+        </View>
+
+        <SectionHeader title="各工序今日动态" />
+        <View className={styles.processTodayGrid}>
+          {processes.map(p => {
+            const stats = todayStats[p.key];
+            const qty = stats?.qty || 0;
+            const failed = stats?.failed || 0;
+            const count = stats?.count || 0;
+            const color = processColorMap[p.key] || '#2563EB';
+            return (
+              <View key={p.key} className={styles.processTodayCard}>
+                <View className={styles.ptcHeader}>
+                  <View className={styles.ptcIcon} style={{ backgroundColor: `${color}15`, color }}>
+                    {processIconMap[p.key] || '○'}
+                  </View>
+                  <Text className={styles.ptcName}>{p.shortName}</Text>
+                </View>
+                <View className={styles.ptcMetrics}>
+                  <View className={styles.ptcMetric}>
+                    <Text className={styles.ptcValue}>{qty}</Text>
+                    <Text className={styles.ptcUnit}>件</Text>
+                  </View>
+                  <View className={styles.ptcFailed}>
+                    {failed > 0 ? (
+                      <Text className={styles.ptcFailedText}>{failed} 异常</Text>
+                    ) : (
+                      <Text className={styles.ptcOkText}>正常</Text>
+                    )}
+                  </View>
+                </View>
+                <Text className={styles.ptcCount}>{count} 条记录</Text>
+              </View>
+            );
+          })}
+        </View>
+
+        <SectionHeader title="近7天产量趋势" />
+        <View className={styles.trendSection}>
+          <View className={styles.trendChart}>
+            {weeklyTrend.map((day, idx) => {
+              const heightPct = maxWeeklyQty > 0 ? Math.max(4, (day.qty / maxWeeklyQty) * 100) : 4;
+              return (
+                <View key={idx} className={styles.trendBarWrap}>
+                  <Text className={styles.trendValue}>{day.qty > 0 ? day.qty : ''}</Text>
+                  <View className={styles.trendBarBg}>
+                    <View
+                      className={styles.trendBar}
+                      style={{
+                        height: `${heightPct}%`,
+                        backgroundColor: idx === weeklyTrend.length - 1 ? '#2563EB' : '#93C5FD'
+                      }}
+                    />
+                  </View>
+                  <Text className={styles.trendLabel}>{day.date}</Text>
+                </View>
+              );
+            })}
           </View>
         </View>
 
@@ -163,9 +200,7 @@ const IndexPage: React.FC = () => {
           onAction={() => Taro.switchTab({ url: '/pages/process/index' })}
         />
         {activeProcesses.length > 0 ? (
-          activeProcesses.map(p => (
-            <ProcessCard key={p.key} process={p} />
-          ))
+          activeProcesses.map(p => <ProcessCard key={p.key} process={p} />)
         ) : (
           <View style={{ padding: '48rpx', textAlign: 'center', background: '#fff', borderRadius: '16rpx' }}>
             <Text style={{ fontSize: '60rpx', color: '#CBD5E1', display: 'block', marginBottom: '16rpx' }}>📋</Text>
@@ -179,9 +214,7 @@ const IndexPage: React.FC = () => {
           onAction={() => Taro.switchTab({ url: '/pages/records/index' })}
         />
         {recentRecords.length > 0 ? (
-          recentRecords.map(r => (
-            <RecordItem key={r.id} record={r} />
-          ))
+          recentRecords.map(r => <RecordItem key={r.id} record={r} />)
         ) : (
           <View style={{ padding: '48rpx', textAlign: 'center', background: '#fff', borderRadius: '16rpx' }}>
             <Text style={{ fontSize: '60rpx', color: '#CBD5E1', display: 'block', marginBottom: '16rpx' }}>📝</Text>

@@ -15,7 +15,7 @@
   background: $color-bg-card;
   border-radius: $radius-lg;
   padding: $spacing-sm $spacing-lg;
-  margin-bottom: $spacing-lg;
+  margin-bottom: $spacing-md;
   box-shadow: $shadow-card;
 }
 
@@ -36,28 +36,109 @@
   color: $color-text-tertiary;
 }
 
-.filterRow {
-  @include scroll-x-container;
-  margin-bottom: $spacing-lg;
+.filterToggle {
+  padding: $spacing-xs $spacing-md;
+  background: $color-bg-page;
+  border-radius: $radius-md;
+  margin-left: $spacing-sm;
 }
 
-.filterChip {
-  @include scroll-x-item(160rpx);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: $spacing-sm $spacing-lg;
-  background: $color-bg-card;
-  border-radius: $radius-button;
-  margin-right: $spacing-sm;
+.filterToggleActive {
+  background: $color-primary;
+}
+
+.filterToggleText {
   font-size: $font-size-sm;
   color: $color-text-secondary;
+}
+
+.filterToggleActive .filterToggleText {
+  color: $color-text-white;
+}
+
+.filterPanel {
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  margin-bottom: $spacing-md;
   box-shadow: $shadow-card;
 }
 
-.filterChipActive {
-  background: $color-primary;
-  color: $color-text-white;
+.filterSection {
+  margin-bottom: $spacing-lg;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.filterLabel {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  color: $color-text-primary;
+  margin-bottom: $spacing-sm;
+  display: block;
+}
+
+.filterChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-sm;
+}
+
+.chip {
+  padding: $spacing-xs $spacing-md;
+  background: $color-bg-page;
+  border-radius: $radius-md;
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  border: 2rpx solid transparent;
+}
+
+.chipActive {
+  background: $color-bg-badge;
+  color: $color-primary;
+  border-color: $color-primary;
+  font-weight: $font-weight-medium;
+}
+
+.dateRow {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+}
+
+.dateInput {
+  flex: 1;
+  height: 72rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: $color-bg-page;
+  border-radius: $radius-md;
+  padding: 0 $spacing-md;
+  font-size: $font-size-sm;
+}
+
+.datePlaceholder {
+  color: $color-text-tertiary;
+}
+
+.dateSeparator {
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+  flex-shrink: 0;
+}
+
+.clearRow {
+  padding-top: $spacing-md;
+  border-top: 1rpx solid $color-divider;
+  text-align: center;
+}
+
+.clearText {
+  font-size: $font-size-sm;
+  color: $color-error;
 }
 
 .statsOverview {
@@ -68,16 +149,30 @@
   margin-bottom: $spacing-lg;
 }
 
+.overviewHeader {
+  display: flex;
+  align-items: center;
+  margin-bottom: $spacing-md;
+}
+
 .overviewTitle {
   font-size: $font-size-md;
   font-weight: $font-weight-semibold;
   color: $color-text-primary;
-  margin-bottom: $spacing-md;
+}
+
+.filteredHint {
+  margin-left: $spacing-sm;
+  padding: 2rpx $spacing-sm;
+  background: $color-bg-badge;
+  border-radius: $radius-xs;
+  font-size: $font-size-xs;
+  color: $color-primary;
 }
 
 .overviewGrid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: $spacing-md;
 }
 
@@ -104,6 +199,10 @@
 
 .overviewWarning {
   color: $color-warning;
+}
+
+.overviewPrimary {
+  color: $color-primary;
 }
 
 .emptyState {

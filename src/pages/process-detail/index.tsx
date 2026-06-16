@@ -11,7 +11,7 @@ import { getStatusText, generateId, formatDateTime } from '@/utils';
 const ProcessDetailPage: React.FC = () => {
   const router = useRouter();
   const processKey = router.params.key as string;
-  const { processes, refresh: refreshProcesses, getByKey, updateStats } = useProcesses();
+  const { processes, refresh: refreshProcesses, getByKey, setProcessesFromStore } = useProcesses();
   const [formData, setFormData] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
 
@@ -169,21 +169,10 @@ const ProcessDetailPage: React.FC = () => {
       const updatedRecords = store.addRecord(newRecord);
       console.log('[ProcessDetail] 记录保存成功，当前记录总数:', updatedRecords.length);
 
-      const qtyForStats = quantity > 0 ? quantity : 1;
-      store.updateProcessStats(process.key, {
-        todayCount: qtyForStats,
-        totalCount: qtyForStats,
-        progress: Math.min(100, (process.progress || 0) + 5),
-        status: 'done'
-      });
-      console.log('[ProcessDetail] 工序统计更新完成');
+      const recalculated = store.recalcAllProcessStats();
+      console.log('[ProcessDetail] 从记录重算工序统计完成，避免双计入');
 
-      updateStats(process.key, {
-        todayCount: qtyForStats,
-        totalCount: qtyForStats,
-        progress: Math.min(100, (process.progress || 0) + 5),
-        status: 'done'
-      });
+      setProcessesFromStore(recalculated);
 
       Taro.showToast({
         title: '提交成功',

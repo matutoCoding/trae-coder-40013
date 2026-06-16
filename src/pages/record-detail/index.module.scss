@@ -129,6 +129,151 @@
   margin-right: $spacing-sm;
 }
 
+.batchCountTag {
+  margin-left: $spacing-sm;
+  padding: $spacing-xs $spacing-sm;
+  background: $color-bg-badge;
+  border-radius: $radius-sm;
+  font-size: $font-size-xs;
+  color: $color-primary;
+  font-weight: $font-weight-medium;
+}
+
+.flowTrack {
+  padding-left: $spacing-sm;
+}
+
+.flowItem {
+  display: flex;
+  min-height: 120rpx;
+}
+
+.flowLineWrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 48rpx;
+  flex-shrink: 0;
+}
+
+.flowDot {
+  width: 40rpx;
+  height: 40rpx;
+  border-radius: $radius-round;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
+  flex-shrink: 0;
+}
+
+.flowDotDone {
+  background: $color-success;
+  color: $color-text-white;
+}
+
+.flowDotActive {
+  background: $color-primary;
+  color: $color-text-white;
+  box-shadow: 0 0 0 6rpx rgba(37, 99, 235, 0.15);
+}
+
+.flowDotPending {
+  background: $color-bg-page;
+  color: $color-text-tertiary;
+  border: 2rpx solid $color-border;
+}
+
+.flowLine {
+  width: 4rpx;
+  flex: 1;
+  min-height: 24rpx;
+  background: $color-border;
+}
+
+.flowLineDone {
+  background: $color-success;
+}
+
+.flowContent {
+  flex: 1;
+  padding: 0 0 $spacing-lg $spacing-md;
+}
+
+.flowContentCurrent {
+  background: #EFF6FF;
+  border-radius: $radius-md;
+  padding: $spacing-sm $spacing-md;
+  margin-left: 0;
+}
+
+.flowHeader {
+  display: flex;
+  align-items: center;
+  margin-bottom: $spacing-xs;
+}
+
+.flowName {
+  font-size: $font-size-md;
+  font-weight: $font-weight-medium;
+  margin-right: $spacing-sm;
+}
+
+.flowNameDone {
+  color: $color-success;
+}
+
+.flowNameActive {
+  color: $color-primary;
+}
+
+.flowNamePending {
+  color: $color-text-tertiary;
+}
+
+.currentTag {
+  padding: 2rpx $spacing-sm;
+  background: $color-primary;
+  color: $color-text-white;
+  border-radius: $radius-xs;
+  font-size: 20rpx;
+  font-weight: $font-weight-medium;
+}
+
+.flowDetail {
+  display: flex;
+  gap: $spacing-md;
+}
+
+.flowQty {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+}
+
+.flowResult {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+}
+
+.flowResultOk {
+  color: $color-success;
+}
+
+.flowResultWarn {
+  color: $color-warning;
+}
+
+.flowResultActive {
+  font-size: $font-size-sm;
+  color: $color-primary;
+}
+
+.flowPending {
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+}
+
 .dataRow {
   display: flex;
   justify-content: space-between;

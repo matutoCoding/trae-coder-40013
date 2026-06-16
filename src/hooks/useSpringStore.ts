@@ -62,5 +62,9 @@ export const useProcesses = () => {
     return store.getProcessByKey(key);
   }, []);
 
-  return { processes, loading, refresh, updateStats, getByKey };
+  const setProcessesFromStore = useCallback((data: ProcessModule[]) => {
+    setProcesses(data);
+  }, []);
+
+  return { processes, loading, refresh, updateStats, getByKey, setProcessesFromStore };
 };
