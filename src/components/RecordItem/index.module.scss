@@ -1,0 +1,128 @@
+@use '@/styles/variables.scss' as *;
+
+.recordItem {
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  box-shadow: $shadow-card;
+  margin-bottom: $spacing-md;
+  transition: all $transition-base;
+
+  &:active {
+    transform: scale(0.99);
+    opacity: 0.95;
+  }
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: $spacing-md;
+}
+
+.batchInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.batchNo {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  display: block;
+  margin-bottom: $spacing-xs;
+}
+
+.springModel {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+}
+
+.statusBadge {
+  padding: $spacing-xs $spacing-md;
+  border-radius: $radius-sm;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+  flex-shrink: 0;
+  margin-left: $spacing-md;
+}
+
+.processRow {
+  display: flex;
+  align-items: center;
+  margin-bottom: $spacing-md;
+}
+
+.processTag {
+  background: $color-bg-badge;
+  padding: $spacing-xs $spacing-sm;
+  border-radius: $radius-xs;
+  margin-right: $spacing-md;
+}
+
+.processTagText {
+  font-size: $font-size-xs;
+  color: $color-primary;
+  font-weight: $font-weight-medium;
+}
+
+.operator {
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+}
+
+.metrics {
+  display: flex;
+  padding: $spacing-md;
+  background: $color-bg-page;
+  border-radius: $radius-md;
+  margin-bottom: $spacing-md;
+}
+
+.metric {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.metricLabel {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+  margin-bottom: $spacing-xs;
+}
+
+.metricValue {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+}
+
+.metricTime {
+  font-size: $font-size-xs;
+  color: $color-text-secondary;
+  font-family: monospace;
+}
+
+.passValue {
+  color: $color-success;
+}
+
+.remarkRow {
+  display: flex;
+  align-items: flex-start;
+}
+
+.remarkLabel {
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+  flex-shrink: 0;
+}
+
+.remarkText {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  flex: 1;
+  @include text-ellipsis-multi(2);
+}

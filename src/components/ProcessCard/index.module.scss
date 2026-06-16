@@ -1,0 +1,187 @@
+@use '@/styles/variables.scss' as *;
+
+.processCard {
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  box-shadow: $shadow-card;
+  margin-bottom: $spacing-md;
+  transition: all $transition-base;
+
+  &:active {
+    transform: scale(0.99);
+    opacity: 0.95;
+  }
+}
+
+.cardHeader {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: $spacing-lg;
+}
+
+.iconWrap {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: $radius-md;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: $spacing-md;
+  flex-shrink: 0;
+}
+
+.icon {
+  font-size: $font-size-xxl;
+  font-weight: $font-weight-bold;
+}
+
+.headerInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.titleRow {
+  display: flex;
+  align-items: center;
+  margin-bottom: $spacing-xs;
+}
+
+.orderNo {
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+  font-weight: $font-weight-semibold;
+  margin-right: $spacing-sm;
+  font-family: monospace;
+}
+
+.name {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+}
+
+.description {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  display: block;
+  @include text-ellipsis;
+}
+
+.statusBadge {
+  padding: $spacing-xs $spacing-md;
+  border-radius: $radius-sm;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+  flex-shrink: 0;
+  margin-left: $spacing-sm;
+}
+
+.subItems {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-sm $spacing-lg;
+  margin-bottom: $spacing-lg;
+  padding: $spacing-md;
+  background: $color-bg-page;
+  border-radius: $radius-md;
+}
+
+.subItem {
+  display: flex;
+  align-items: center;
+}
+
+.subItemDot {
+  width: 8rpx;
+  height: 8rpx;
+  border-radius: $radius-round;
+  margin-right: $spacing-xs;
+}
+
+.subItemText {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+}
+
+.progressSection {
+  margin-bottom: $spacing-lg;
+}
+
+.progressHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: $spacing-sm;
+}
+
+.progressLabel {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+}
+
+.progressValue {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+}
+
+.progressBar {
+  height: 12rpx;
+  background: $color-bg-page;
+  border-radius: $radius-round;
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  border-radius: $radius-round;
+  transition: width $transition-slow;
+}
+
+.statsRow {
+  display: flex;
+  align-items: center;
+  padding-top: $spacing-lg;
+  border-top: 1rpx solid $color-divider;
+}
+
+.statItem {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.statLabel {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+  margin-bottom: $spacing-xs;
+}
+
+.statValue {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+}
+
+.statDivider {
+  width: 1rpx;
+  height: 48rpx;
+  background: $color-border;
+}
+
+.arrowItem {
+  flex-direction: row;
+  justify-content: center;
+  gap: $spacing-xs;
+}
+
+.enterText {
+  font-size: $font-size-sm;
+  color: $color-primary;
+}
+
+.arrow {
+  font-size: $font-size-md;
+  color: $color-primary;
+}
